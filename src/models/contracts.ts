@@ -5,7 +5,16 @@ const ContractSchema = new mongoose.Schema({
     clientName: { type: String, required: true },
     status: {
       type: String,
-      enum: ['Draft', 'Pending Approval', 'Active', 'Completed', 'Expired'],
+      enum: [
+        'Draft',
+        'Pending Approval',
+        'Approved',
+        'Active',
+        'Amendment',  // Optional, if you want to track revisions separately
+        'Completed',
+        'Expired',
+        'Terminated'  // Optional, for capturing premature termination
+      ],      
       default: 'Draft',
     },
     currentVersion: { type: Number, default: 1 }, // Tracks the current version

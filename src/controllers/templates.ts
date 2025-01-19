@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { AppErrServer } from "../utils/app-err";
+import jwt from 'jsonwebtoken';
 import { Templates } from "../models/templates";
 
 // Create a new template
@@ -13,12 +14,36 @@ export async function CreateTemplate(req: Request, res: Response, next: NextFunc
                 status: 'fail',
                 message: 'Title and content are required to create a template',
             });
+        };
+
+        // Extract token from cookies or headers
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+        console.log(token);
+            
+        // If no token found, log out gracefully
+        if (!token) {
+            return res.status(401).json({
+                message: "User logged out (no active session).",
+            });
+        }
+
+        // Verify token
+        let decodedToken : any = null;
+        try {
+            decodedToken = jwt.verify(token, process.env.JWT_SECRET as string);
+        } catch (error) {
+            // Invalid token, clear cookies as a fallback
+            res.clearCookie("token");
+            return res.status(401).json({
+                message: "User logged out (invalid token).",
+            });
         }
 
         const template = new Templates({
             title,
             content,
             description,
+            createdBy : decodedToken.id
         });
 
         const savedTemplate = await template.save();
@@ -36,7 +61,32 @@ export async function CreateTemplate(req: Request, res: Response, next: NextFunc
 // Fetch all templates
 export async function FetchAllTemplates(req: Request, res: Response, next: NextFunction) {
     try {
-        const templates = await Templates.find();
+        // Extract token from cookies or headers
+        const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+        console.log(token);
+            
+        // If no token found, log out gracefully
+        if (!token) {
+            return res.status(401).json({
+                message: "User logged out (no active session).",
+            });
+        }
+
+        // Verify token
+        let decodedToken : any = null;
+        try {
+            decodedToken = jwt.verify(token, process.env.JWT_SECRET as string);
+        } catch (error) {
+            // Invalid token, clear cookies as a fallback
+            res.clearCookie("token");
+            return res.status(401).json({
+                message: "User logged out (invalid token).",
+            });
+        }
+
+        const templates = await Templates.find({
+            createdBy : decodedToken.id
+        });
 
         return res.status(200).json({
             status: 'success',

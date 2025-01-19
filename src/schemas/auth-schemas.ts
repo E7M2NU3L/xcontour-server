@@ -10,8 +10,8 @@ export const LoginSchema = z.object({
 });
 
 export const RegisterSchema = z.object({
-    firstName : z.string(),
-    lastName : z.string(),
+    firstname : z.string(),
+    lastname : z.string(),
     email : z.string().email({
         message : "Enter a valid email address"
     }),
@@ -20,9 +20,7 @@ export const RegisterSchema = z.object({
     }).max(70, {
         message : "Exceeded the maximum character limit"
     }),
-    role : z.enum(['viewer', 'admin', 'editor'], {
-        required_error : "Role is required"
-    })
+    Role : z.enum(['viewer', 'admin', 'editor']).optional().default('editor')
 });
 
 export const VerifyEmailSchema = z.object({
@@ -50,9 +48,8 @@ export const VerifyResetPasswordSchema = z.object({
 });
 
 export const UpdateProfileSchema = z.object({
-    firstName : z.string(),
-    lastName : z.string(),
-    password : z.string().min(8, {
-        message : "Password must be at least 8 characters long"
-    }),
+    firstname : z.string(),
+    lastname : z.string(),
+    phoneNumber : z.string(),
+    Bio : z.string().optional()
 });

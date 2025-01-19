@@ -1,36 +1,36 @@
 import { NextFunction, Request, Response } from "express";
-import { AppErr } from "utils/app-err";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { UserModel } from "models/user";
+import { AppErr } from "../utils/app-err";
+import { UserModel } from "../models/user";
 
 dotenv.config();
 
-export const AuthMiddleware = async (err : any, req : Request, res : Response, next : NextFunction) => {
+export const AuthMiddleware = (err : any, req : any, res : Response, next : NextFunction) => {
     try {
-        const token = req?.headers?.authorization?.split(' ')[1];
+        const token = req.cookies['token'];
+        console.log("token: ",token);
         if(!token) return next(AppErr('Unauthorized', 401));
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as any;
         if(!decoded) return next(AppErr('Unauthorized', 401));
+        console.log(decoded);
 
-        const user = await UserModel.findById(decoded?._id);
-        if(!user) return next(AppErr('Unauthorized', 401));
-
-        (req as any).user = user;
+        req.user = decoded;
+        console.log(req.user);
         next();
     } catch (error) {
         next(AppErr('Something went wrong', 500));
     }
 }
 
-export const CheckEditor = async (req : Request, res : Response, next : NextFunction) => {
+export const CheckEditor = (req : Request, res : Response, next : NextFunction) => {
     const user = (req as any).user;
     if(user?.Role !== 'editor') return next(AppErr('Unauthorized', 401));
     next();
 };
 
-export const CheckAdmin = async (req : Request, res : Response, next : NextFunction) => {
+export const CheckAdmin = (req : Request, res : Response, next : NextFunction) => {
     const user = (req as any).user;
     if(user?.Role !== 'admin') return next(AppErr('Unauthorized', 401));
     next();

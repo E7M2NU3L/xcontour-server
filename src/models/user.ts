@@ -30,6 +30,14 @@ export const UserSchema = new mongoose.Schema({
         type : String,
         default : ''
     },
+    phoneNumber : {
+        type : String,
+        default : ""
+    },
+    Bio : {
+        type : String,
+        default : ""
+    },
     isVerified : {
         type : Boolean,
         default : false

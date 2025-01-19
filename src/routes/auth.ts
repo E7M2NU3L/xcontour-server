@@ -1,99 +1,129 @@
-import { deleteProfileController, deleteProfilePicController, forgotPasswordController, getProfileController, refreshTokenController, resetPasswordController, signInController, signOutController, signUpController, updateProfileController, uploadProfilePicController, verifyEmailController, verifyResetPasswordController } from "../controllers/auth";
-import { Router } from "express";
+import { AuthMiddleware } from "../middlewares/user";
+import { DeleteAccountController, deleteProfileController, deleteProfilePicController, forgotPasswordController, getProfileController, refreshTokenController, resetPasswordController, signInController, signOutController, signUpController, updateProfileController, uploadProfilePicController, verifyEmailController, verifyResetPasswordController, VerifyUserSendOtpController } from "../controllers/auth";
+import { NextFunction, Request, Response, Router } from "express";
+import { CallbackGoogle, InitGoogle } from "../controllers/google-auth";
 
 // Auth Router
 const AuthRouter = Router();
 // Routes
-AuthRouter.post("/sign-in", async (req, res, next) => {
+AuthRouter.post("/sign-in", async (req :  Request, res : Response, next : NextFunction) => {
   try {
     await signInController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/sign-up", async (req, res, next) => {
+AuthRouter.post("/sign-up", async (req :  Request, res : Response, next : NextFunction) => {
   try {
     await signUpController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/sign-out", async (req, res, next) => {
+
+AuthRouter.post("/sign-out", async (req: Request, res: Response, next: NextFunction) => {
   try {
     await signOutController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/refresh-token", async (req, res, next) => {
+
+AuthRouter.post("/refresh-token", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await refreshTokenController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.get("/verify-email", async (req, res, next) => {
+
+AuthRouter.post("/verify-user-send-otp", AuthMiddleware, async (req : Request, res : Response, next : NextFunction) => {
+  try {
+    await VerifyUserSendOtpController(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+})
+
+AuthRouter.put("/verify-email", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await verifyEmailController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/forgot-password", async (req, res, next) => {
+AuthRouter.post("/send-otp", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await forgotPasswordController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/reset-password", async (req, res, next) => {
+AuthRouter.put("/reset-password", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await resetPasswordController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/verify-reset-password", async (req, res, next) => {
+AuthRouter.post("/verify-otp", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await verifyResetPasswordController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.get("/profile", async (req, res, next) => {
+AuthRouter.get("/profile", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await getProfileController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.patch("/profile", async (req, res, next) => {
+AuthRouter.put("/profile", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await updateProfileController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.delete("/profile", async (req, res, next) => {
+AuthRouter.delete("/profile", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    await deleteProfileController(req, res, next);
+    await DeleteAccountController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.post("/upload-profile-pic", async (req, res, next) => {
+AuthRouter.put("/upload-profile-pic", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await uploadProfilePicController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
-AuthRouter.delete("/delete-profile-pic", async (req, res, next) => {
+AuthRouter.put("/delete-profile-pic", AuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     await deleteProfilePicController(req, res, next);
   } catch (error) {
     next(error);
   }
 });
+
+AuthRouter.get("/google", InitGoogle);
+AuthRouter.get("/callback/google", CallbackGoogle);
+
+// Success 
+AuthRouter.get('/auth/callback/success' , (req : Request , res : Response) => {
+  if(!req.user)
+      {
+        res.redirect('/auth/callback/failure');
+      }
+    res.send(req.user);
+});
+
+// failure
+AuthRouter.get('/auth/callback/failure' , (req  : Request, res : Response) => {
+  res.send("Error");
+})
 
 export default AuthRouter;

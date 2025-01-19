@@ -2,9 +2,9 @@ import http from "http";
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
+import cookieSession from 'cookie-session'
 import cookieParser from 'cookie-parser';
 import morgan from 'morgan';
-import bodyParser from 'body-parser';
 import dotenv from 'dotenv';
 import { globalErrHandler } from "./middlewares/global-err";
 import AuthRouter from "./routes/auth";
@@ -12,9 +12,13 @@ import { dbConnect } from "./config/dbConnect";
 import TemplateRouter from "./routes/templates";
 import ContractsRouter from "./routes/contracts";
 import SuggestionsRouter from "./routes/suggestions";
+import session from 'express-session';
+import passport from 'passport';
+import { initPassport } from './config/passport_connect';
 
 // dotenv configuration
 dotenv.config();
+initPassport();
 
 // port
 const port = process.env.PORT || 5000;
@@ -26,12 +30,33 @@ const app = express();
 dbConnect();
 
 // app middlewares
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use(compression());
-app.use(cors());
-app.use(morgan('dev'));
+app.use(cookieSession({
+    name: 'google-auth-session',
+    keys: ['xcontour'],
+    maxAge : 24 * 60 * 60 * 100
+}));
+app.use(session({
+    secret: process.env.SESSION_SECRET as string,
+    resave: false,
+    saveUninitialized: false,
+    name : "user",
+    cookie: {
+        secure: false,
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 3,
+    }
+  }));
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(cors({
+    credentials : true,
+    origin : 'http://localhost:5173',
+    methods : "GET,POST,PUT,DELETE"
+}));
+app.use(morgan('combined'));
 
 // custom middlewares
 app.use(globalErrHandler);
