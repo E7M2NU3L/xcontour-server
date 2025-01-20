@@ -15,6 +15,7 @@ import SuggestionsRouter from "./routes/suggestions";
 import session from 'express-session';
 import passport from 'passport';
 import { initPassport } from './config/passport_connect';
+import { OverviewRouter } from "./routes/overview";
 
 // dotenv configuration
 dotenv.config();
@@ -58,17 +59,18 @@ app.use(cors({
 }));
 app.use(morgan('combined'));
 
-// custom middlewares
-app.use(globalErrHandler);
-
 // server
 const server = http.createServer(app);
 
-// routes
+// routes // /api/v1/contracts/delete/${id}
 app.use("/api/v1/auth", AuthRouter);
 app.use("/api/v1/templates", TemplateRouter);
 app.use("/api/v1/contracts", ContractsRouter);
 app.use("/api/v1/suggestions", SuggestionsRouter);
+app.use("/api/v1/overview", OverviewRouter);
+
+// custom middlewares
+app.use(globalErrHandler);
 
 // starting the server
 server.listen(port, () => {

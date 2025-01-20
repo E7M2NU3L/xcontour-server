@@ -5,7 +5,10 @@ dotenv.config();
 
 export const dbConnect = async () => {
     const mongoURI = process.env.MONGO_URI as string;
-    console.log(mongoURI);
+    console.log(mongoURI, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    });
 
     mongoose.connect(mongoURI).then(() => {
         console.log("Connected to the Database");

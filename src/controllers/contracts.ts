@@ -1,6 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import { NextFunction, Request, Response } from "express";
 import { Contracts } from "../models/contracts";
 import { AppErrServer } from "../utils/app-err";
+import jwt from 'jsonwebtoken'
 
 // Helper function to validate object IDs or return an error
 import mongoose from "mongoose";
@@ -10,7 +14,28 @@ const isValidObjectId = (id: string): boolean => mongoose.Types.ObjectId.isValid
 // Create Contracts
 export async function CreateContract(req: Request, res: Response, next: NextFunction) {
     try {
-        const { title, clientName, content, participants } = req.body;
+        const { title, clientName, content, participants, status } = req.body;
+         // Extract token from cookies or headers
+         const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+            
+         // If no token found, log out gracefully
+         if (!token) {
+             return res.status(401).json({
+                 message: "User logged out (no active session).",
+             });
+         }
+ 
+         // Verify token
+         let decodedToken : any = null;
+         try {
+             decodedToken = jwt.verify(token, process.env.JWT_SECRET as string);
+         } catch (error) {
+             // Invalid token, clear cookies as a fallback
+             res.clearCookie("token");
+             return res.status(401).json({
+                 message: "User logged out (invalid token).",
+             });
+         }
 
         if (!title || !clientName || !content || !participants) {
             return res.status(400).json({
@@ -27,12 +52,13 @@ export async function CreateContract(req: Request, res: Response, next: NextFunc
                 {
                     versionNumber: 1,
                     content,
-                    createdBy: (req as any).user._id,
+                    createdBy: decodedToken.id,
+                    status : status ?? 'Draft',
                     changeSummary: "Initial Draft",
                 },
             ],
             participants,
-            createdBy: (req as any).user._id,
+            createdBy: decodedToken.id,
         });
 
         return res.status(201).json({
@@ -63,6 +89,7 @@ export async function FetchAllContracts(req: Request, res: Response, next: NextF
 export async function FetchContractById(req: Request, res: Response, next: NextFunction) {
     try {
         const { id } = req.params;
+        console.log(id, " is the id")
 
         if (!isValidObjectId(id)) {
             return res.status(400).json({
@@ -90,11 +117,10 @@ export async function FetchContractById(req: Request, res: Response, next: NextF
     }
 }
 
-// Update Contracts
-export async function UpdateContract(req: Request, res: Response, next: NextFunction) {
+export async function updateVersion(req : Request, res : Response, next : NextFunction) {
     try {
         const { id } = req.params;
-        const { content, changeSummary } = req.body;
+        const { status, versionNumber } = req.body;
 
         if (!isValidObjectId(id)) {
             return res.status(400).json({
@@ -112,11 +138,74 @@ export async function UpdateContract(req: Request, res: Response, next: NextFunc
             });
         }
 
+         // Find the version to update by versionNumber
+         const versionToUpdate = contract.versions.find(v => v.versionNumber === versionNumber);
+        
+         if (!versionToUpdate) {
+            return res.status(401).json({
+                message : "Version not Found",
+                status : "Failed",
+            })
+        };
+
+        versionToUpdate.status = status ?? versionToUpdate.status;
+        
+        await contract.save();
+
+        return res.json({
+            status : "Success",
+            contract,
+            message: "Status updated successfully",
+        })
+    } catch (error) {
+        next(AppErrServer(error));
+    }
+}
+
+// Update Contracts
+export async function UpdateContract(req: Request, res: Response, next: NextFunction) {
+    try {
+        const { id } = req.params;
+        const {title, clientName, content, changeSummary, status, versionNumber } = req.body;
+
+        if (!isValidObjectId(id)) {
+            return res.status(400).json({
+                status: "fail",
+                message: "Invalid contract ID",
+            });
+        }
+
+        const contract = await Contracts.findById(id);
+
+        if (!contract) {
+            return res.status(404).json({
+                status: "fail",
+                message: "Contracts not found",
+            });
+        }
+
+         // Find the version to update by versionNumber
+         const versionToUpdate = contract.versions.find(v => v.versionNumber === versionNumber);
+            if (!title || !clientName || !content) {
+                if (versionToUpdate) {
+                    versionToUpdate.status = status ?? versionToUpdate.status;
+                    versionToUpdate.versionNumber  = versionToUpdate.versionNumber + 1
+                }
+
+                return res.json({
+                    status : "Success",
+                    contract,
+                    message: "Status updated successfully",
+                })
+            }
+        
+        contract.title = title;
+        contract.clientName = clientName;
+
         // Add a new version
         contract.versions.push({
             versionNumber: contract.currentVersion + 1,
             content,
-            createdBy: (req as any).user._id,
             changeSummary,
         });
 
@@ -145,14 +234,7 @@ export async function DeleteContract(req: Request, res: Response, next: NextFunc
             });
         }
 
-        const contract = await Contracts.findByIdAndDelete(id);
-
-        if (!contract) {
-            return res.status(404).json({
-                status: "fail",
-                message: "Contracts not found",
-            });
-        }
+        await Contracts.findByIdAndDelete(id);
 
         return res.status(200).json({
             status: "success",
