@@ -54,7 +54,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(cors({
     credentials : true,
-    origin : 'https://xcontour.vercel.app/',
+    origin : 'https://xcontour.vercel.app',
     methods : "GET,POST,PUT,DELETE"
 }));
 app.use(morgan('combined'));
