@@ -1,18 +1,17 @@
 {
     "compilerOptions": {
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
+        "module": "CommonJS",
+        "moduleResolution": "Node",
         "target": "ES2022",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist",
-        "baseUrl": "./src",
         "rootDir": "./src",
-        "sourceMap": true,
+        "sourceMap": false,
         "noImplicitAny": true,
         "typeRoots": ["./node_modules/@types", "./src/types"]
     },
-    "include": ["src/**/*.ts"],
+    "include": ["src"]
 }
