@@ -9,6 +9,7 @@
         "forceConsistentCasingInFileNames": true,
         "outDir": "./dist",
         "baseUrl": "./src",
+        "rootDir": "./src",
         "sourceMap": true,
         "noImplicitAny": true,
         "typeRoots": ["./node_modules/@types", "./src/types"]
