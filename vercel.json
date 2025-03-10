@@ -1,20 +1,23 @@
 {
-    "version" : 2,
-    "builds" : [
-        {
-            "src" : "src/server.ts",
-            "use" : "@vercel/node"
-        }
+    "version": 2,
+    "builds": [
+      {
+        "src": "src/server.ts",
+        "use": "@vercel/node"
+      }
     ],
     "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "src/server.ts",
-            "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-            "headers": {
-                "Access-Control-Allow-Origin": "https://xcontour.vercel.app",
-                "Access-Control-Allow-Credentials" : "true"
-            }
+      {
+        "src": "/(.*)",
+        "dest": "src/server.ts",
+        "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        "headers": {
+          "Access-Control-Allow-Origin": "https://flynte.vercel.app",
+          "Access-Control-Allow-Credentials": "true",
+          "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+          "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With, Set-Cookie"
         }
+      }
     ]
-}
+  }
+  
